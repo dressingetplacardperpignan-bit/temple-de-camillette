@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Le Temple de Camillette 🏛️</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #F5F3F8; --card: #FFFFFF; --accent: #8B7FB8;
+      --accent-soft: #EAE6F5; --border: #DDD9EC;
+      --text: #2D2B36; --text-soft: #6E6A7C; --danger: #C07070; --success: #6B9E8A;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px 80px; }
+
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--accent); margin-bottom: 4px; }
+    header p { font-size: 0.82rem; color: var(--text-soft); }
+
+    .tabs { display: flex; max-width: 480px; margin: 0 auto 24px; background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 4px; gap: 4px; }
+    .tab { flex: 1; text-align: center; padding: 9px 0; border-radius: 9px; font-size: 0.85rem; font-weight: 500; cursor: pointer; color: var(--text-soft); transition: all 0.15s; }
+    .tab.active { background: var(--accent); color: white; }
+
+    .view { display: none; max-width: 480px; margin: 0 auto; }
+    .view.active { display: block; }
+
+    /* Date nav */
+    .date-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }
+    .date-nav button { background: var(--card); border: 1px solid var(--border); border-radius: 50%; width: 34px; height: 34px; font-size: 1rem; cursor: pointer; color: var(--accent); }
+    .date-nav button:hover { background: var(--accent-soft); }
+    #day-label { font-size: 0.92rem; font-weight: 500; min-width: 200px; text-align: center; }
+
+    /* Compteur */
+    .counter-wrap { text-align: center; margin-bottom: 20px; }
+    .counter-circle { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 110px; height: 110px; border-radius: 50%; background: var(--card); border: 3px solid var(--accent); }
+    .counter-num { font-family: 'DM Serif Display', serif; font-size: 2.8rem; color: var(--accent); line-height: 1; }
+    .counter-label { font-size: 0.68rem; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* Formulaire */
+    .form-card { background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 20px; margin-bottom: 24px; }
+    .field-group { margin-bottom: 14px; }
+    .field-group label { display: block; font-size: 0.72rem; font-weight: 500; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+    .field-group input[type="text"],
+    .field-group input[type="time"],
+    .field-group input[type="number"],
+    .field-group textarea {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 9px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.92rem; background: var(--bg);
+      color: var(--text); outline: none; transition: border-color 0.15s;
+    }
+    .field-group input:focus, .field-group textarea:focus { border-color: var(--accent); }
+    .field-group textarea { resize: none; min-height: 70px; }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Type de lavage */
+    .type-chips { display: flex; gap: 8px; }
+    .type-chip { flex: 1; text-align: center; padding: 10px 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; color: var(--text); }
+    .type-chip.selected { background: var(--accent); border-color: var(--accent); color: white; }
+
+    .btn-add { width: 100%; padding: 13px; background: var(--accent); color: white; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; margin-top: 4px; transition: opacity 0.15s; }
+    .btn-add:hover { opacity: 0.85; }
+
+    .section-title { font-family: 'DM Serif Display', serif; font-size: 1rem; color: var(--accent); margin-bottom: 12px; }
+
+    /* Carte lavage */
+    .entry-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+    .entry-card.editing { border-color: var(--accent); }
+    .entry-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .entry-num { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--accent); min-width: 36px; }
+    .entry-meta { flex: 1; }
+    .entry-time-big { font-size: 1rem; font-weight: 500; color: var(--text); }
+    .entry-date-small { font-size: 0.76rem; color: var(--text-soft); }
+    .entry-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-edit, .btn-del { background: none; border: 1px solid var(--border); border-radius: 7px; padding: 4px 10px; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; color: var(--text-soft); }
+    .btn-edit:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .btn-del:hover { border-color: var(--danger); color: var(--danger); }
+
+    .entry-body { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+    .badge { border-radius: 20px; padding: 3px 10px; font-size: 0.78rem; }
+    .badge-type { background: var(--accent); color: white; }
+    .badge-rep { background: var(--accent-soft); color: var(--accent); }
+    .badge-lieu { background: #F0EDF7; color: var(--text-soft); }
+    .entry-ctx { font-size: 0.86rem; color: var(--text); line-height: 1.5; font-style: italic; }
+    .entry-field-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-soft); margin-bottom: 2px; margin-top: 6px; }
+
+    /* Formulaire édition inline */
+    .edit-form { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 14px; display: none; }
+    .edit-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-save { flex: 1; padding: 9px; background: var(--success); color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; cursor: pointer; }
+    .btn-cancel { flex: 1; padding: 9px; background: none; color: var(--text-soft); border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; cursor: pointer; }
+
+    .empty { text-align: center; color: var(--text-soft); font-size: 0.85rem; padding: 24px 0; }
+
+    /* Semaine / Mois */
+    .week-nav, .month-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }
+    .week-nav button, .month-nav button { background: var(--card); border: 1px solid var(--border); border-radius: 50%; width: 34px; height: 34px; font-size: 1rem; cursor: pointer; color: var(--accent); }
+    #week-label { font-size: 0.88rem; color: var(--text-soft); min-width: 200px; text-align: center; }
+    #month-label { font-size: 1rem; font-weight: 500; min-width: 160px; text-align: center; }
+
+    .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 20px; }
+    .week-day { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 4px; text-align: center; }
+    .week-day.today { border-color: var(--accent); }
+    .wd-name { font-size: 0.68rem; color: var(--text-soft); text-transform: uppercase; margin-bottom: 4px; }
+    .wd-date { font-size: 0.72rem; color: var(--text-soft); margin-bottom: 6px; }
+    .wd-count { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--accent); }
+    .wd-count.zero { color: var(--border); }
+
+    .total-card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .total-card span { font-size: 0.82rem; color: var(--text-soft); }
+    .total-card strong { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--accent); }
+
+    .week-detail, .month-list { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 12px; }
+    .wd-row, .ml-row { padding: 12px 16px; border-bottom: 1px solid var(--bg); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .wd-row:last-child, .ml-row:last-child { border-bottom: none; }
+    .wd-row-date, .ml-date { font-size: 0.85rem; font-weight: 500; }
+    .wd-row-count, .ml-count { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--accent); white-space: nowrap; }
+
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 20px; }
+    .cal-head { text-align: center; font-size: 0.65rem; color: var(--text-soft); text-transform: uppercase; padding: 4px 0; }
+    .cal-cell { background: var(--card); border: 1px solid var(--border); border-radius: 8px; min-height: 52px; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+    .cal-cell.empty-cell { background: transparent; border-color: transparent; }
+    .cal-cell.today-cell { border-color: var(--accent); }
+    .cal-d { font-size: 0.7rem; color: var(--text-soft); }
+    .cal-n { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--accent); }
+    .cal-n.zero { color: var(--border); font-size: 0.85rem; }
+
+    .export-row { display: flex; gap: 10px; margin-top: 10px; }
+    .btn-export { flex: 1; padding: 12px; border-radius: 10px; border: none; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+    .btn-export:hover { opacity: 0.85; }
+    .btn-pdf { background: var(--accent); color: white; }
+    .btn-excel { background: #1D6F42; color: white; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--success); color: white; padding: 9px 22px; border-radius: 30px; font-size: 0.85rem; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 99; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏛️ Le Temple de Camillette</h1>
+  <p>Mon journal de lavages de mains 🌿</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('jour')">Aujourd'hui</div>
+  <div class="tab" onclick="switchTab('semaine')">Semaine</div>
+  <div class="tab" onclick="switchTab('mois')">Mois</div>
+</div>
+
+<!-- ── VUE JOUR ── -->
+<div class="view active" id="view-jour">
+  <div class="date-nav">
+    <button onclick="changerJour(-1)">‹</button>
+    <span id="day-label"></span>
+    <button onclick="changerJour(1)">›</button>
+  </div>
+  <div class="counter-wrap">
+    <div class="counter-circle">
+      <span class="counter-num" id="total-jour">0</span>
+      <span class="counter-label">lavage(s)</span>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="field-group">
+      <label>Type de lavage</label>
+      <div class="type-chips" id="chips-type">
+        <div class="type-chip selected" data-val="Eau">💧 Eau</div>
+        <div class="type-chip" data-val="Lingette">🧻 Lingette</div>
+        <div class="type-chip" data-val="Gel hydro">🧴 Gel hydro</div>
+      </div>
+    </div>
+    <div class="row-2">
+      <div class="field-group">
+        <label>Nombre de répétitions</label>
+        <input type="number" id="f-rep" min="1" max="50" value="1" placeholder="1" />
+      </div>
+      <div class="field-group">
+        <label>Heure</label>
+        <input type="time" id="f-heure" />
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Lieu</label>
+      <div class="type-chips" id="chips-lieu">
+        <div class="type-chip" data-val="Maison">🏠 Maison</div>
+        <div class="type-chip" data-val="Travail">💼 Travail</div>
+        <div class="type-chip" data-val="Voiture">🚗 Voiture</div>
+        <div class="type-chip" data-val="Autres">📍 Autres</div>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Contexte — qu'est-ce qui s'est passé ?</label>
+      <textarea id="f-contexte" placeholder="Ex : j'avais touché la poignée de porte, j'avais une pensée angoissante…"></textarea>
+    </div>
+    <button class="btn-add" onclick="ajouter()">＋ Enregistrer ce lavage</button>
+  </div>
+
+  <div class="section-title" id="hist-title">Historique du jour</div>
+  <div id="liste-jour"></div>
+</div>
+
+<!-- ── VUE SEMAINE ── -->
+<div class="view" id="view-semaine">
+  <div class="week-nav">
+    <button onclick="changerSemaine(-1)">‹</button>
+    <span id="week-label"></span>
+    <button onclick="changerSemaine(1)">›</button>
+  </div>
+  <div class="week-grid" id="week-grid"></div>
+  <div class="total-card">
+    <span>Total de la semaine</span>
+    <strong id="week-total-num">0</strong>
+  </div>
+  <div class="week-detail" id="week-detail"></div>
+  <div class="export-row">
+    <button class="btn-export btn-pdf" onclick="genererRapport('semaine')">📄 Rapport PDF</button>
+    <button class="btn-export btn-excel" onclick="exporterExcel('semaine')">📊 Export Excel</button>
+  </div>
+</div>
+
+<!-- ── VUE MOIS ── -->
+<div class="view" id="view-mois">
+  <div class="month-nav">
+    <button onclick="changerMois(-1)">‹</button>
+    <span id="month-label"></span>
+    <button onclick="changerMois(1)">›</button>
+  </div>
+  <div class="total-card">
+    <span>Total du mois</span>
+    <strong id="month-total-num">0</strong>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div class="month-list" id="month-list"></div>
+  <div class="export-row">
+    <button class="btn-export btn-pdf" onclick="genererRapport('mois')">📄 Rapport PDF</button>
+    <button class="btn-export btn-excel" onclick="exporterExcel('mois')">📊 Export Excel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── HELPERS ──
+function iso(d) { return d.toISOString().slice(0,10); }
+function lundi(d) { const r=new Date(d); r.setDate(r.getDate()-((r.getDay()+6)%7)); r.setHours(0,0,0,0); return r; }
+function addDays(d,n) { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function labelJour(d) { const s=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); }
+function labelMoisAnnee(d) { const s=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}); return s.charAt(0).toUpperCase()+s.slice(1); }
+function heureNow() { const n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
+
+// ── STORAGE ──
+function charger(d) { try { return JSON.parse(localStorage.getItem('camillette-'+iso(d)))||[]; } catch { return []; } }
+function sauvegarder(d,data) { localStorage.setItem('camillette-'+iso(d), JSON.stringify(data)); }
+
+// Total lavages d'un jour (en tenant compte des répétitions)
+function totalJour(d) { return charger(d).reduce((s,e)=>s+(e.repetitions||1),0); }
+
+// ── ÉTAT ──
+const today = new Date(); today.setHours(0,0,0,0);
+let currentDay   = new Date(today);
+let currentWeek  = lundi(today);
+let currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+// ── TABS ──
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['jour','semaine','mois'][i]===name));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  if(name==='semaine') afficherSemaine();
+  if(name==='mois') afficherMois();
+}
+
+// ── CHIPS TYPE ──
+document.querySelectorAll('#chips-type .type-chip').forEach(c => {
+  c.onclick = () => {
+    document.querySelectorAll('#chips-type .type-chip').forEach(x=>x.classList.remove('selected'));
+    c.classList.add('selected');
+  };
+});
+function getType() {
+  const sel = document.querySelector('#chips-type .type-chip.selected');
+  return sel ? sel.dataset.val : 'Eau';
+}
+
+// ── CHIPS LIEU ──
+document.querySelectorAll('#chips-lieu .type-chip').forEach(c => {
+  c.onclick = () => {
+    document.querySelectorAll('#chips-lieu .type-chip').forEach(x=>x.classList.remove('selected'));
+    c.classList.add('selected');
+  };
+});
+function getLieu() {
+  const sel = document.querySelector('#chips-lieu .type-chip.selected');
+  return sel ? sel.dataset.val : '';
+}
+
+// ── VUE JOUR ──
+function changerJour(n) { currentDay=addDays(currentDay,n); afficherJour(); }
+
+function afficherJour() {
+  const isToday = iso(currentDay)===iso(today);
+  document.getElementById('day-label').textContent = isToday ? 'Aujourd\'hui' : labelJour(currentDay);
+  document.getElementById('hist-title').textContent = isToday ? 'Historique du jour' : 'Historique — '+currentDay.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+
+  const total = totalJour(currentDay);
+  document.getElementById('total-jour').textContent = total;
+
+  const data = charger(currentDay);
+  const liste = document.getElementById('liste-jour');
+  if(!data.length) { liste.innerHTML='<div class="empty">Aucun lavage enregistré pour ce jour.</div>'; return; }
+
+  // Numérotation cumulative tenant compte des répétitions
+  let numCumulatif = 0;
+  liste.innerHTML = data.map((e) => {
+    const rep = e.repetitions || 1;
+    const debut = numCumulatif + 1;
+    const fin = numCumulatif + rep;
+    numCumulatif += rep;
+    const numLabel = rep > 1 ? `#${debut}–${fin}` : `#${debut}`;
+    return `
+    <div class="entry-card" id="card-${e.id}">
+      <div class="entry-header">
+        <span class="entry-num">${numLabel}</span>
+        <div class="entry-meta">
+          <div class="entry-time-big">${e.heure}</div>
+          <div class="entry-date-small">${currentDay.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div>
+        </div>
+        <div class="entry-actions">
+          <button class="btn-edit" data-id="${e.id}">✏️</button>
+          <button class="btn-del" data-id="${e.id}">✕</button>
+        </div>
+      </div>
+      <div class="entry-body">
+        <span class="badge badge-type">${e.type||'Eau'}</span>
+        ${rep > 1 ? `<span class="badge badge-rep">${rep}x consécutifs</span>` : ''}
+        ${e.lieu ? `<span class="badge badge-lieu">📍 ${e.lieu}</span>` : ''}
+      </div>
+      ${e.contexte ? `<div class="entry-field-label">Contexte</div><div class="entry-ctx">${e.contexte}</div>` : ''}
+
+      <!-- Formulaire modification -->
+      <div class="edit-form" id="edit-${e.id}">
+        <div class="field-group">
+          <label>Type de lavage</label>
+          <div class="type-chips" id="edit-chips-type-${e.id}">
+            <div class="type-chip${(e.type||'Eau')==='Eau'?' selected':''}" data-val="Eau">💧 Eau</div>
+            <div class="type-chip${e.type==='Lingette'?' selected':''}" data-val="Lingette">🧻 Lingette</div>
+            <div class="type-chip${e.type==='Gel hydro'?' selected':''}" data-val="Gel hydro">🧴 Gel hydro</div>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field-group">
+            <label>Répétitions</label>
+            <input type="number" id="edit-rep-${e.id}" min="1" max="50" value="${rep}" />
+          </div>
+          <div class="field-group">
+            <label>Heure</label>
+            <input type="time" id="edit-heure-${e.id}" value="${e.heure}" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Lieu</label>
+          <div class="type-chips" id="edit-chips-lieu-${e.id}">
+            <div class="type-chip${(e.lieu||'')==='Maison'?' selected':''}" data-val="Maison">🏠 Maison</div>
+            <div class="type-chip${(e.lieu||'')==='Travail'?' selected':''}" data-val="Travail">💼 Travail</div>
+            <div class="type-chip${(e.lieu||'')==='Voiture'?' selected':''}" data-val="Voiture">🚗 Voiture</div>
+            <div class="type-chip${(e.lieu||'')==='Autres'?' selected':''}" data-val="Autres">📍 Autres</div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Contexte</label>
+          <textarea id="edit-ctx-${e.id}">${e.contexte||''}</textarea>
+        </div>
+        <div class="edit-actions">
+          <button class="btn-save" data-id="${e.id}">✓ Enregistrer</button>
+          <button class="btn-cancel" data-id="${e.id}">Annuler</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Chips type dans les formulaires d'édition
+  data.forEach(e => {
+    document.querySelectorAll(`#edit-chips-type-${e.id} .type-chip`).forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll(`#edit-chips-type-${e.id} .type-chip`).forEach(x=>x.classList.remove('selected'));
+        c.classList.add('selected');
+      };
+    });
+    document.querySelectorAll(`#edit-chips-lieu-${e.id} .type-chip`).forEach(c => {
+      c.onclick = () => {
+        document.querySelectorAll(`#edit-chips-lieu-${e.id} .type-chip`).forEach(x=>x.classList.remove('selected'));
+        c.classList.add('selected');
+      };
+    });
+  });
+
+  // Supprimer
+  liste.querySelectorAll('.btn-del').forEach(btn => {
+    btn.onclick = () => {
+      if(!confirm('Supprimer ce lavage ?')) return;
+      sauvegarder(currentDay, charger(currentDay).filter(e=>e.id!==Number(btn.dataset.id)));
+      afficherJour();
+    };
+  });
+
+  // Ouvrir/fermer édition
+  liste.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.dataset.id);
+      const form = document.getElementById('edit-'+id);
+      const card = document.getElementById('card-'+id);
+      const open = form.style.display === 'block';
+      form.style.display = open ? 'none' : 'block';
+      card.classList.toggle('editing', !open);
+    };
+  });
+
+  // Enregistrer modification
+  liste.querySelectorAll('.btn-save').forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.dataset.id);
+      const data = charger(currentDay);
+      const idx = data.findIndex(e=>e.id===id);
+      if(idx !== -1) {
+        const selType = document.querySelector(`#edit-chips-type-${id} .type-chip.selected`);
+        data[idx].type       = selType ? selType.dataset.val : 'Eau';
+        data[idx].repetitions = parseInt(document.getElementById('edit-rep-'+id).value)||1;
+        data[idx].heure      = document.getElementById('edit-heure-'+id).value || data[idx].heure;
+        const selLieu = document.querySelector(`#edit-chips-lieu-${id} .type-chip.selected`);
+        data[idx].lieu       = selLieu ? selLieu.dataset.val : '';
+        data[idx].contexte   = document.getElementById('edit-ctx-'+id).value.trim();
+        sauvegarder(currentDay, data);
+        afficherJour();
+        toast('Modifié ✓');
+      }
+    };
+  });
+
+  // Annuler
+  liste.querySelectorAll('.btn-cancel').forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.dataset.id);
+      document.getElementById('edit-'+id).style.display='none';
+      document.getElementById('card-'+id).classList.remove('editing');
+    };
+  });
+}
+
+function ajouter() {
+  const type      = getType();
+  const rep       = parseInt(document.getElementById('f-rep').value)||1;
+  const heure     = document.getElementById('f-heure').value || heureNow();
+  const lieu      = getLieu();
+  const contexte  = document.getElementById('f-contexte').value.trim();
+
+  const data = charger(currentDay);
+  data.push({ id:Date.now(), heure, type, repetitions:rep, lieu, contexte });
+  sauvegarder(currentDay, data);
+
+  // Reset
+  document.getElementById('f-rep').value = '1';
+  document.getElementById('f-heure').value = '';
+  document.getElementById('f-contexte').value = '';
+  document.querySelectorAll('#chips-type .type-chip').forEach((c,i)=>c.classList.toggle('selected',i===0));
+  document.querySelectorAll('#chips-lieu .type-chip').forEach(c=>c.classList.remove('selected'));
+
+  afficherJour();
+  toast('Enregistré ✓');
+}
+
+// ── VUE SEMAINE ──
+function changerSemaine(n) { currentWeek=addDays(currentWeek,n*7); afficherSemaine(); }
+
+function afficherSemaine() {
+  const fin=addDays(currentWeek,6);
+  const fmt=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  document.getElementById('week-label').textContent=fmt(currentWeek)+' – '+fmt(fin);
+  const jours=Array.from({length:7},(_,i)=>addDays(currentWeek,i));
+  const noms=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  let total=0;
+  document.getElementById('week-grid').innerHTML=jours.map((d,i)=>{
+    const n=totalJour(d); total+=n;
+    return `<div class="week-day${iso(d)===iso(today)?' today':''}"><div class="wd-name">${noms[i]}</div><div class="wd-date">${d.getDate()}</div><div class="wd-count${n===0?' zero':''}">${n||'–'}</div></div>`;
+  }).join('');
+  document.getElementById('week-total-num').textContent=total;
+  const detail=jours.filter(d=>totalJour(d)>0);
+  document.getElementById('week-detail').innerHTML=!detail.length
+    ? '<div class="empty">Aucun lavage cette semaine.</div>'
+    : detail.map(d=>{
+        const n=totalJour(d);
+        return `<div class="wd-row"><span class="wd-row-date">${d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})}</span><span class="wd-row-count">${n} lavage${n>1?'s':''}</span></div>`;
+      }).join('');
+}
+
+// ── VUE MOIS ──
+function changerMois(n) { currentMonth=new Date(currentMonth.getFullYear(),currentMonth.getMonth()+n,1); afficherMois(); }
+
+function afficherMois() {
+  document.getElementById('month-label').textContent=labelMoisAnnee(currentMonth);
+  const a=currentMonth.getFullYear(), m=currentMonth.getMonth();
+  const dernier=new Date(a,m+1,0);
+  let total=0;
+  for(let d=1;d<=dernier.getDate();d++) total+=totalJour(new Date(a,m,d));
+  document.getElementById('month-total-num').textContent=total;
+  const entete=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(j=>`<div class="cal-head">${j}</div>`).join('');
+  const dec=(new Date(a,m,1).getDay()+6)%7;
+  let cases=Array(dec).fill('<div class="cal-cell empty-cell"></div>');
+  for(let d=1;d<=dernier.getDate();d++){
+    const date=new Date(a,m,d); const n=totalJour(date);
+    cases.push(`<div class="cal-cell${iso(date)===iso(today)?' today-cell':''}"><span class="cal-d">${d}</span><span class="cal-n${n===0?' zero':''}">${n||'–'}</span></div>`);
+  }
+  document.getElementById('cal-grid').innerHTML=entete+cases.join('');
+  let lignes=[];
+  for(let d=1;d<=dernier.getDate();d++){
+    const date=new Date(a,m,d); const n=totalJour(date);
+    if(n>0) lignes.push(`<div class="ml-row"><span class="ml-date">${date.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long'})}</span><span class="ml-count">${n} lavage${n>1?'s':''}</span></div>`);
+  }
+  document.getElementById('month-list').innerHTML=lignes.length?lignes.join(''):'<div class="empty">Aucun lavage ce mois-ci.</div>';
+}
+
+// ── RAPPORT PDF ──
+function genererRapport(periode) {
+  let titre, jours=[];
+  if(periode==='semaine'){
+    const fin=addDays(currentWeek,6);
+    const fmt=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+    titre='Semaine du '+fmt(currentWeek)+' au '+fmt(fin);
+    jours=Array.from({length:7},(_,i)=>addDays(currentWeek,i));
+  } else {
+    titre=labelMoisAnnee(currentMonth);
+    const a=currentMonth.getFullYear(),m=currentMonth.getMonth(),nb=new Date(a,m+1,0).getDate();
+    for(let d=1;d<=nb;d++) jours.push(new Date(a,m,d));
+  }
+  let total=0, lignes='', num=0;
+  jours.forEach(d=>{
+    const data=charger(d); if(!data.length) return;
+    const ds=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    data.forEach((e,i)=>{
+      const rep=e.repetitions||1; total+=rep; num++;
+      const numLabel=rep>1?`#${num} (${rep}x)`:`#${num}`;
+      lignes+=`<tr><td>${numLabel}</td><td>${i===0?ds:''}</td><td>${e.heure}</td><td>${e.type||'Eau'}</td><td>${rep}</td><td>${e.contexte||'—'}</td><td>${e.lieu||'—'}</td></tr>`;
+    });
+  });
+  const html=`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><title>Rapport Camillette</title>
+  <style>body{font-family:Arial,sans-serif;color:#2D2B36;padding:40px;max-width:820px;margin:0 auto;}
+  h1{color:#8B7FB8;font-size:1.4rem;margin-bottom:4px;}.sub{color:#6E6A7C;font-size:0.88rem;margin-bottom:28px;}
+  .box{background:#EAE6F5;border-radius:10px;padding:16px 24px;display:inline-block;margin-bottom:28px;}
+  .box .n{font-size:2.5rem;color:#8B7FB8;font-weight:bold;line-height:1;}.box .l{font-size:0.78rem;color:#6E6A7C;text-transform:uppercase;letter-spacing:0.08em;}
+  table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+  th{background:#8B7FB8;color:white;padding:8px 10px;text-align:left;font-size:0.78rem;}
+  td{padding:7px 10px;border-bottom:1px solid #EAE6F5;vertical-align:top;}
+  tr:nth-child(even) td{background:#F9F8FC;}
+  td:first-child{color:#8B7FB8;font-weight:bold;}td:nth-child(2){color:#8B7FB8;font-size:0.78rem;}
+  .footer{margin-top:32px;font-size:0.75rem;color:#aaa;text-align:center;}
+  @media print{.btn{display:none;}}</style></head><body>
+  <h1>🏛️ Le Temple de Camillette — ${titre}</h1>
+  <p class="sub">Rapport généré le ${new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</p>
+  <div class="box"><div class="n">${total}</div><div class="l">lavage${total>1?'s':''} au total</div></div>
+  ${total>0?`<table><thead><tr><th>N°</th><th>Date</th><th>Heure</th><th>Type</th><th>Répétitions</th><th>Contexte</th><th>Lieu</th></tr></thead><tbody>${lignes}</tbody></table>`:'<p style="color:#aaa;text-align:center;padding:20px">Aucune donnée.</p>'}
+  <p class="footer">Journal de suivi — Le Temple de Camillette 🏛️</p><br/>
+  <button class="btn" onclick="window.print()" style="padding:10px 20px;background:#8B7FB8;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">🖨️ Enregistrer en PDF</button>
+  </body></html>`;
+  const w=window.open('','_blank'); w.document.write(html); w.document.close();
+}
+
+// ── EXPORT EXCEL ──
+function exporterExcel(periode) {
+  let jours=[], titre;
+  if(periode==='semaine'){ jours=Array.from({length:7},(_,i)=>addDays(currentWeek,i)); titre='semaine'; }
+  else { const a=currentMonth.getFullYear(),m=currentMonth.getMonth(),nb=new Date(a,m+1,0).getDate(); for(let d=1;d<=nb;d++) jours.push(new Date(a,m,d)); titre='mois'; }
+  let rows=['\uFEFFN°,Date,Heure,Type,Répétitions,Contexte,Lieu'], num=0;
+  jours.forEach(d=>{
+    charger(d).forEach(e=>{
+      num++;
+      rows.push([num, d.toLocaleDateString('fr-FR'), e.heure, e.type||'Eau', e.repetitions||1,
+        '"'+(e.contexte||'').replace(/"/g,'""')+'"',
+        '"'+(e.lieu||'').replace(/"/g,'""')+'"'].join(','));
+    });
+  });
+  const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='camillette-'+titre+'.csv'; a.click();
+  toast('Export téléchargé ✓');
+}
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+afficherJour();
+</script>
+</body>
+</html>
